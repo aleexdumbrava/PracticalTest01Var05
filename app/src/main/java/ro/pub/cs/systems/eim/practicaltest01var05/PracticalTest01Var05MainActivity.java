@@ -3,7 +3,13 @@ package ro.pub.cs.systems.eim.practicaltest01var05;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +24,22 @@ public class PracticalTest01Var05MainActivity extends AppCompatActivity {
     private Button bottomRight;
     private EditText editText;
     private int total_number_of_clicks = 0;
+
+    private IntentFilter intentFilter = new IntentFilter();
+    private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
+    private class MessageBroadcastReceiver extends BroadcastReceiver {
+        int i = 0;
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            Log.d("[Message]", intent.getStringExtra("Message " + i));
+            i++;
+            if (i >= total_number_of_clicks) {
+                i = 0;
+            }
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,6 +51,8 @@ public class PracticalTest01Var05MainActivity extends AppCompatActivity {
         bottomLeft = findViewById(R.id.bottom_left);
         bottomRight = findViewById(R.id.bottom_right);
         editText = findViewById(R.id.editText1);
+        intentFilter.addAction(Constants.action_type);
+
         topLeft.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -37,6 +61,13 @@ public class PracticalTest01Var05MainActivity extends AppCompatActivity {
                 text += topLeft.getText().toString();
                 text += ", ";
                 editText.setText(text);
+                if (total_number_of_clicks > Constants.THRESHOLD) {
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName("ro.pub.cs.systems.eim.practicaltest01var05",
+                            "ro.pub.cs.systems.eim.practicaltest01var05.PracticalTest01Var05Service"));
+                    intent.putExtra("text", text);
+                    startService(intent);
+                }
             }
         });
 
@@ -48,6 +79,13 @@ public class PracticalTest01Var05MainActivity extends AppCompatActivity {
                 text += topRight.getText().toString();
                 text += ", ";
                 editText.setText(text);
+                if (total_number_of_clicks > Constants.THRESHOLD) {
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName("ro.pub.cs.systems.eim.practicaltest01var05",
+                            "ro.pub.cs.systems.eim.practicaltest01var05.PracticalTest01Var05Service"));
+                    intent.putExtra("text", text);
+                    startService(intent);
+                }
             }
         });
 
@@ -59,6 +97,13 @@ public class PracticalTest01Var05MainActivity extends AppCompatActivity {
                 text += center.getText().toString();
                 text += ", ";
                 editText.setText(text);
+                if (total_number_of_clicks > Constants.THRESHOLD) {
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName("ro.pub.cs.systems.eim.practicaltest01var05",
+                            "ro.pub.cs.systems.eim.practicaltest01var05.PracticalTest01Var05Service"));
+                    intent.putExtra("text", text);
+                    startService(intent);
+                }
             }
         });
 
@@ -70,6 +115,13 @@ public class PracticalTest01Var05MainActivity extends AppCompatActivity {
                 text += bottomLeft.getText().toString();
                 text += ", ";
                 editText.setText(text);
+                if (total_number_of_clicks > Constants.THRESHOLD) {
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName("ro.pub.cs.systems.eim.practicaltest01var05",
+                            "ro.pub.cs.systems.eim.practicaltest01var05.PracticalTest01Var05Service"));
+                    intent.putExtra("text", text);
+                    startService(intent);
+                }
             }
         });
 
@@ -81,8 +133,17 @@ public class PracticalTest01Var05MainActivity extends AppCompatActivity {
                 text += bottomRight.getText().toString();
                 text += ", ";
                 editText.setText(text);
+                if (total_number_of_clicks > Constants.THRESHOLD) {
+                    Intent intent = new Intent();
+                    intent.setComponent(new ComponentName("ro.pub.cs.systems.eim.practicaltest01var05",
+                            "ro.pub.cs.systems.eim.practicaltest01var05.PracticalTest01Var05Service"));
+                    intent.putExtra("text", text);
+                    startService(intent);
+                }
             }
         });
+
+        navigateToSecondaryActivityClick();
     }
 
     @Override
@@ -106,5 +167,37 @@ public class PracticalTest01Var05MainActivity extends AppCompatActivity {
         if (total_number_of_clicks != 0) {
             Toast.makeText(this, "Total number of clicks: " + total_number_of_clicks, Toast.LENGTH_LONG).show();
         }
+    }
+
+    public void navigateToSecondaryActivityClick() {
+        navigateToSecondaryActivity.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent("ro.pub.cs.systems.eim.practicaltest01var05.PracticalTest01Var05SecondaryActivity");
+                intent.putExtra("textValue", editText.getText().toString());
+                startActivityIfNeeded(intent, Constants.SECONDARY_ACTIVITY_REQUEST_CODE);
+            }
+        });
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (requestCode == Constants.SECONDARY_ACTIVITY_REQUEST_CODE) {
+            total_number_of_clicks = 0;
+            editText.setText("");
+            Toast.makeText(this, "The activity returned with result " + resultCode, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(messageBroadcastReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(messageBroadcastReceiver);
     }
 }
